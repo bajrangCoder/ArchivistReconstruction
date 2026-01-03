@@ -1,5 +1,10 @@
 export type BlockColor = string;
 
+export interface GridCell {
+  color: BlockColor;
+  symbol: string;
+}
+
 export interface Shape {
   id: string;
   layout: number[][];

@@ -1,4 +1,4 @@
-import type { Shape, BlockColor } from '../types';
+import type { Shape, GridCell } from '../types';
 import { GRID_SIZE } from '../constants';
 
 /**
@@ -6,7 +6,7 @@ import { GRID_SIZE } from '../constants';
  * Optimized to exit early when a valid placement is found.
  */
 export const checkCanPlaceAny = (
-  currentGrid: (BlockColor | null)[][],
+  currentGrid: (GridCell | null)[][],
   currentTray: (Shape | null)[]
 ): boolean => {
   const shapes = currentTray.filter((s): s is Shape => s !== null);
@@ -24,7 +24,7 @@ export const checkCanPlaceAny = (
  * Check if a specific shape can be placed anywhere on the grid.
  */
 export const canPlaceShape = (
-  grid: (BlockColor | null)[][],
+  grid: (GridCell | null)[][],
   shape: Shape
 ): boolean => {
   const rows = shape.layout.length;
@@ -44,7 +44,7 @@ export const canPlaceShape = (
  * Check if a shape can be placed at a specific position.
  */
 export const canPlaceShapeAt = (
-  grid: (BlockColor | null)[][],
+  grid: (GridCell | null)[][],
   shape: Shape,
   row: number,
   col: number
@@ -58,7 +58,7 @@ export const canPlaceShapeAt = (
   
   for (let dr = 0; dr < rows; dr++) {
     for (let dc = 0; dc < cols; dc++) {
-      if (shape.layout[dr][dc] && grid[row + dr][col + dc]) {
+      if (shape.layout[dr][dc] && grid[row + dr][col + dc] !== null) {
         return false;
       }
     }
@@ -70,7 +70,7 @@ export const canPlaceShapeAt = (
  * Calculate which lines would be cleared if a shape is placed.
  */
 export const calculatePotentialLines = (
-  grid: (BlockColor | null)[][],
+  grid: (GridCell | null)[][],
   shape: Shape,
   row: number,
   col: number
@@ -80,12 +80,12 @@ export const calculatePotentialLines = (
     return { rows: [], cols: [] };
   }
 
-  // Create simulated grid with the shape placed
-  const simGrid = grid.map(r => [...r]);
+  // Create simulated grid with the shape placed (just checking for filled cells)
+  const simGrid: (boolean)[][] = grid.map(r => r.map(cell => cell !== null));
   shape.layout.forEach((sRow, dr) => {
     sRow.forEach((filled, dc) => {
       if (filled) {
-        simGrid[row + dr][col + dc] = shape.color;
+        simGrid[row + dr][col + dc] = true;
       }
     });
   });
@@ -95,7 +95,7 @@ export const calculatePotentialLines = (
   const colsToClear: number[] = [];
 
   for (let r = 0; r < GRID_SIZE; r++) {
-    if (simGrid[r].every(cell => cell !== null)) {
+    if (simGrid[r].every(cell => cell)) {
       rowsToClear.push(r);
     }
   }
@@ -103,7 +103,7 @@ export const calculatePotentialLines = (
   for (let c = 0; c < GRID_SIZE; c++) {
     let full = true;
     for (let r = 0; r < GRID_SIZE; r++) {
-      if (simGrid[r][c] === null) {
+      if (!simGrid[r][c]) {
         full = false;
         break;
       }
@@ -143,6 +143,6 @@ export const calculateGridPosition = (
 /**
  * Create an empty grid.
  */
-export const createEmptyGrid = (): (BlockColor | null)[][] => {
+export const createEmptyGrid = (): (GridCell | null)[][] => {
   return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
 };

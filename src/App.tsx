@@ -6,6 +6,7 @@ import StatsPage from './components/StatsPage';
 import ComboDisplay from './components/ComboDisplay';
 import AchievementToast from './components/AchievementToast';
 import ThemePicker from './components/ThemePicker';
+import ShareModal from './components/ShareModal';
 import { soundManager } from './components/SoundManager';
 import { GRID_SIZE, getRandomShape } from './constants';
 import { checkCanPlaceAny, canPlaceShapeAt, calculatePotentialLines, createEmptyGrid, calculateGridPosition } from './utils/gameUtils';
@@ -15,10 +16,10 @@ import {
   loadStats, saveStats, loadAchievements, checkAchievements, 
   type GameStats, type Achievement 
 } from './data/gameStats';
-import type { Shape, BlockColor, Particle, GameStatus, FeedbackText } from './types';
+import type { Shape, GridCell, Particle, GameStatus, FeedbackText } from './types';
 
 function App() {
-  const [grid, setGrid] = useState<(BlockColor | null)[][]>(createEmptyGrid);
+  const [grid, setGrid] = useState<(GridCell | null)[][]>(createEmptyGrid);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(() => {
     const saved = localStorage.getItem('archivist_puzzle_highscore_8x8');
@@ -51,6 +52,7 @@ function App() {
   const [blocksPlacedThisGame, setBlocksPlacedThisGame] = useState(0);
   const [linesClearedThisGame, setLinesClearedThisGame] = useState(0);
   const [screenTransition, setScreenTransition] = useState<'in' | 'out' | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardRect, setBoardRect] = useState<DOMRect | null>(null);
@@ -137,7 +139,7 @@ function App() {
   }, []);
 
   const handleLineClears = useCallback(
-    (currentGrid: (BlockColor | null)[][]) => {
+    (currentGrid: (GridCell | null)[][]) => {
       const rowsToClear: number[] = [];
       const colsToClear: number[] = [];
 
@@ -333,7 +335,7 @@ function App() {
       activeShape.layout.forEach((sRow, dr) => {
         sRow.forEach((filled, dc) => {
           if (filled) {
-            newGrid[row + dr][col + dc] = activeShape.color;
+            newGrid[row + dr][col + dc] = { color: activeShape.color, symbol: activeShape.symbol };
             newStamps.add(`${row + dr},${col + dc}`);
             blocksInShape++;
           }
@@ -471,28 +473,9 @@ function App() {
     setShowThemePicker(false);
   }, []);
 
-  const handleShareScore = useCallback(async () => {
-    const text = `🏆 I scored ${score} points in The Archivist's Reconstruction!\n\nCan you beat my record?`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "The Archivist's Reconstruction",
-          text: text,
-        });
-      } catch {
-        // User cancelled or share failed
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(text);
-        showFeedback('Copied!');
-      } catch {
-        // Clipboard failed
-      }
-    }
-  }, [score, showFeedback]);
+  const handleShareScore = useCallback(() => {
+    setShowShareModal(true);
+  }, []);
 
   return (
     <div className={`min-h-screen bg-[#f4ecd8] paper-texture flex flex-col items-center p-4 md:p-8 text-[#2d241e] overflow-hidden select-none touch-none transition-all duration-500 relative ${
@@ -647,41 +630,41 @@ function App() {
       </main>
 
       {gameStatus === 'START' && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
-          <div className="bg-[#f4ecd8] border-8 border-[#d4c9af] p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-500">
+          <div className="bg-[#f4ecd8] border-4 sm:border-8 border-[#d4c9af] p-4 sm:p-6 max-w-md w-full shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto">
             {/* Decorative top border */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
+            <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
             
             {/* Header with icon */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-[#2d241e] rounded-sm mb-4">
-                <Book size={32} className="text-[#f4ecd8]" />
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-[#2d241e] rounded-sm mb-3 sm:mb-4">
+                <Book size={24} className="text-[#f4ecd8] sm:w-8 sm:h-8" />
               </div>
-              <h1 className="text-3xl font-serif font-bold italic text-[#2d241e] mb-1">
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold italic text-[#2d241e] mb-1">
                 The Archivist's
               </h1>
-              <h2 className="text-4xl font-serif font-bold text-[#7b341e]">
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#7b341e]">
                 Reconstruction
               </h2>
-              <p className="text-sm text-[#5c4a3c] mt-2 font-serif">Volume VIII</p>
+              <p className="text-xs sm:text-sm text-[#5c4a3c] mt-1 sm:mt-2 font-serif">Volume VIII</p>
             </div>
 
             {/* High Score Display */}
             {gameStats.highScore > 0 && (
-              <div className="bg-[#efe7d3] border border-[#d4c9af] p-3 mb-4 text-center">
-                <span className="text-xs uppercase tracking-widest text-[#5c4a3c]/70 font-bold">Best Record</span>
-                <p className="text-2xl font-bold text-[#2d241e]">{gameStats.highScore.toLocaleString()}</p>
+              <div className="bg-[#efe7d3] border border-[#d4c9af] p-2 sm:p-3 mb-3 sm:mb-4 text-center">
+                <span className="text-[10px] sm:text-xs uppercase tracking-widest text-[#5c4a3c]/70 font-bold">Best Record</span>
+                <p className="text-xl sm:text-2xl font-bold text-[#2d241e]">{gameStats.highScore.toLocaleString()}</p>
               </div>
             )}
 
             {/* How to Play */}
             {showHowToPlay ? (
-              <div className="bg-[#efe7d3] border border-[#d4c9af] p-4 mb-4 text-left">
-                <h3 className="font-serif font-bold text-[#2d241e] mb-2 flex items-center gap-2">
-                  <HelpCircle size={16} />
+              <div className="bg-[#efe7d3] border border-[#d4c9af] p-3 sm:p-4 mb-3 sm:mb-4 text-left">
+                <h3 className="font-serif font-bold text-[#2d241e] mb-2 flex items-center gap-2 text-sm sm:text-base">
+                  <HelpCircle size={14} className="sm:w-4 sm:h-4" />
                   How to Preserve the Archive
                 </h3>
-                <ul className="text-sm text-[#5c4a3c] space-y-2 font-serif">
+                <ul className="text-xs sm:text-sm text-[#5c4a3c] space-y-1.5 sm:space-y-2 font-serif">
                   <li className="flex gap-2">
                     <span className="text-[#7b341e]">❧</span>
                     <span>Drag ink stamps from the tray onto the grid</span>
@@ -701,47 +684,47 @@ function App() {
                 </ul>
                 <button
                   onClick={() => setShowHowToPlay(false)}
-                  className="w-full mt-3 py-2 text-sm text-[#5c4a3c] hover:text-[#2d241e] transition-colors"
+                  className="w-full mt-2 sm:mt-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#5c4a3c] hover:text-[#2d241e] transition-colors"
                 >
                   ← Back
                 </button>
               </div>
             ) : (
-              <p className="font-serif italic opacity-80 leading-relaxed text-[#2d241e] text-center mb-4">
+              <p className="font-serif italic opacity-80 leading-relaxed text-[#2d241e] text-center mb-3 sm:mb-4 text-sm sm:text-base">
                 Organize the scattered ink stamps. Fill rows or columns to clear the page.
               </p>
             )}
 
             {/* Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <button
                 onClick={handleStart}
-                className="w-full py-4 bg-[#2d241e] text-[#f4ecd8] font-serif text-xl font-bold hover:bg-[#3d3129] transition-all flex items-center justify-center space-x-2 shadow-lg"
+                className="w-full py-3 sm:py-4 bg-[#2d241e] text-[#f4ecd8] font-serif text-lg sm:text-xl font-bold hover:bg-[#3d3129] transition-all flex items-center justify-center space-x-2 shadow-lg"
               >
-                <Play size={20} fill="currentColor" />
+                <Play size={18} fill="currentColor" className="sm:w-5 sm:h-5" />
                 <span>Begin Reconstruction</span>
               </button>
               
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <button
                   onClick={() => setShowStatsPage(true)}
-                  className="py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-sm"
+                  className="py-2 sm:py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-xs sm:text-sm"
                 >
-                  <BarChart3 size={14} />
+                  <BarChart3 size={12} className="sm:w-3.5 sm:h-3.5" />
                   <span>Records</span>
                 </button>
                 <button
                   onClick={() => setShowHowToPlay(true)}
-                  className="py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-sm"
+                  className="py-2 sm:py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-xs sm:text-sm"
                 >
-                  <HelpCircle size={14} />
+                  <HelpCircle size={12} className="sm:w-3.5 sm:h-3.5" />
                   <span>Guide</span>
                 </button>
                 <button
                   onClick={() => setShowThemePicker(true)}
-                  className="py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-sm"
+                  className="py-2 sm:py-3 bg-[#efe7d3] text-[#2d241e] font-serif font-bold hover:bg-[#e6ddc4] transition-all flex items-center justify-center space-x-1 border-2 border-[#d4c9af] text-xs sm:text-sm"
                 >
-                  <Palette size={14} />
+                  <Palette size={12} className="sm:w-3.5 sm:h-3.5" />
                   <span>Theme</span>
                 </button>
               </div>
@@ -754,15 +737,15 @@ function App() {
                     return !prev;
                   });
                 }}
-                className="w-full py-2 text-[#5c4a3c] hover:text-[#2d241e] transition-colors flex items-center justify-center space-x-2"
+                className="w-full py-1.5 sm:py-2 text-[#5c4a3c] hover:text-[#2d241e] transition-colors flex items-center justify-center space-x-2"
               >
-                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                <span className="text-sm">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
+                {soundEnabled ? <Volume2 size={14} className="sm:w-4 sm:h-4" /> : <VolumeX size={14} className="sm:w-4 sm:h-4" />}
+                <span className="text-xs sm:text-sm">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
               </button>
             </div>
 
             {/* Decorative bottom border */}
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-1 sm:h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
           </div>
         </div>
       )}
@@ -841,6 +824,14 @@ function App() {
           onClose={() => setShowThemePicker(false)}
         />
       )}
+
+      {/* Share Modal */}
+      <ShareModal
+        score={score}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onFeedback={showFeedback}
+      />
     </div>
   );
 }

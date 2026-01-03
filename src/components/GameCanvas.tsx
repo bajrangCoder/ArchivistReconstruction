@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import type { Particle, Shape, BlockColor, FeedbackText, GameStatus } from '../types';
+import type { Particle, Shape, GridCell, FeedbackText, GameStatus } from '../types';
 import { GRID_SIZE, PAPER_COLOR } from '../constants';
 
 interface GameCanvasProps {
-  grid: (BlockColor | null)[][];
+  grid: (GridCell | null)[][];
   activeShape: Shape | null;
   dragPos: { x: number; y: number } | null;
   particles: Particle[];
@@ -189,13 +189,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.clearRect(0, 0, width, height);
       ctx.save();
 
-      // Game over filter
+      // Update game over fade progress (but don't use expensive filters)
       if (state.gameStatus === 'GAMEOVER') {
-        animationState.gameOverFade = Math.min(1, animationState.gameOverFade + 0.015);
-        ctx.filter = `grayscale(${animationState.gameOverFade * 100}%) sepia(${animationState.gameOverFade * 30}%) brightness(${1 - animationState.gameOverFade * 0.3})`;
+        animationState.gameOverFade = Math.min(1, animationState.gameOverFade + 0.02);
       } else {
         animationState.gameOverFade = 0;
-        ctx.filter = 'none';
       }
 
       // Shake effect
@@ -262,20 +260,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Draw grid blocks
       state.grid.forEach((row, r) => {
-        row.forEach((color, c) => {
+        row.forEach((cell, c) => {
           const key = `${r},${c}`;
           const seed = (r * GRID_SIZE + c) * 10;
 
           if (state.clearingCells.has(key)) {
             const progress = animationState.clearingProgress.get(key) || 0;
-            if (progress < 1) {
+            if (progress < 1 && cell) {
               drawBlock(
                 ctx,
                 c * cellSize,
                 r * cellSize,
                 cellSize,
-                color || '#2d3748',
-                '●',
+                cell.color,
+                cell.symbol,
                 1 - progress,
                 1 + progress * 1.5,
                 true,
@@ -283,7 +281,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               );
               animationState.clearingProgress.set(key, progress + 0.035);
             }
-          } else if (color) {
+          } else if (cell) {
             let scale = 1;
             let opacity = 1;
 
@@ -296,7 +294,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               }
             }
 
-            drawBlock(ctx, c * cellSize, r * cellSize, cellSize, color, '●', opacity, scale, false, seed);
+            drawBlock(ctx, c * cellSize, r * cellSize, cellSize, cell.color, cell.symbol, opacity, scale, false, seed);
           } else {
             animationState.clearingProgress.delete(key);
             animationState.stampingProgress.delete(key);
@@ -449,20 +447,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         return prev.length !== next.length ? next : prev;
       });
 
-      // Game over vignette
+      // Game over overlay - use simple semi-transparent fill instead of gradient
       if (animationState.gameOverFade > 0) {
         ctx.save();
-        const alpha = animationState.gameOverFade * 0.4;
-        const gradient = ctx.createRadialGradient(width / 2, height / 2, width / 4, width / 2, height / 2, width / 1.2);
-        gradient.addColorStop(0, `rgba(45, 36, 30, 0)`);
-        gradient.addColorStop(1, `rgba(29, 23, 19, ${alpha})`);
-        ctx.fillStyle = gradient;
+        ctx.globalAlpha = animationState.gameOverFade * 0.35;
+        ctx.fillStyle = '#1d1713';
         ctx.fillRect(0, 0, width, height);
         ctx.restore();
       }
 
       ctx.restore();
-      requestRef.current = requestAnimationFrame(draw);
+      
+      // Slow down animation loop after game over fade completes to save resources
+      if (state.gameStatus === 'GAMEOVER' && animationState.gameOverFade >= 1) {
+        // Run at reduced frame rate during game over
+        setTimeout(() => {
+          requestRef.current = requestAnimationFrame(draw);
+        }, 100); // ~10fps instead of 60fps
+      } else {
+        requestRef.current = requestAnimationFrame(draw);
+      }
     };
 
     requestRef.current = requestAnimationFrame(draw);
