@@ -648,12 +648,13 @@ function App() {
 
       {gameStatus === 'START' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
-          <div className="bg-[#f4ecd8] border-8 border-[#d4c9af] p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+          <div className="bg-[#f4ecd8] border-8 border-[#d4c9af] max-w-md w-full shadow-2xl relative flex flex-col max-h-[90vh]">
             {/* Decorative top border */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent z-10"></div>
             
-            {/* Header with icon */}
-            <div className="text-center mb-6">
+            <div className="overflow-y-auto p-6">
+              {/* Header with icon */}
+              <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-[#2d241e] rounded-sm mb-4">
                 <Book size={32} className="text-[#f4ecd8]" />
               </div>
@@ -761,17 +762,19 @@ function App() {
               </button>
             </div>
 
+            </div>
             {/* Decorative bottom border */}
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent z-10"></div>
           </div>
         </div>
       )}
 
       {showGameOverModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-1000">
-          <div className="bg-[#f4ecd8] border-8 border-[#d4c9af] p-8 max-w-sm w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
-            <Award size={48} className="mx-auto text-[#7b341e]" />
+          <div className="bg-[#f4ecd8] border-8 border-[#d4c9af] max-w-sm w-full shadow-2xl relative flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent z-10"></div>
+            <div className="overflow-y-auto p-8 text-center space-y-6">
+              <Award size={48} className="mx-auto text-[#7b341e]" />
             <h2 className="text-4xl font-serif font-bold italic text-[#2d241e]">The Final Chapter</h2>
             <p className="font-serif italic opacity-70 text-sm leading-tight">
               The ink has ceased its flow, and the reconstruction is complete. Your efforts remain etched in these
@@ -813,7 +816,8 @@ function App() {
                 </button>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent"></div>
+            </div>
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#7b341e] to-transparent z-10"></div>
           </div>
         </div>
       )}

@@ -21,9 +21,9 @@ const StatsPage: React.FC<StatsPageProps> = ({ stats, achievements, onClose }) =
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-[#f4ecd8] border-4 border-[#d4c9af] rounded-sm max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#f4ecd8] border-4 border-[#d4c9af] rounded-sm max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-[#f4ecd8] border-b-2 border-[#d4c9af] p-4 flex items-center justify-between">
+        <div className="bg-[#f4ecd8] border-b-2 border-[#d4c9af] p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <BookOpen size={24} className="text-[#5c4a3c]" />
             <h2 className="text-2xl font-serif font-bold italic text-[#2d241e]">Scribe's Records</h2>
@@ -36,36 +36,39 @@ const StatsPage: React.FC<StatsPageProps> = ({ stats, achievements, onClose }) =
           </button>
         </div>
 
-        {/* Statistics */}
-        <div className="p-4 space-y-4">
-          <h3 className="text-lg font-serif font-bold text-[#5c4a3c] flex items-center gap-2">
-            <BarChart3 size={18} />
-            Statistics
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <StatBox label="Games Played" value={stats.gamesPlayed} icon="📜" />
-            <StatBox label="High Score" value={stats.highScore.toLocaleString()} icon="👑" />
-            <StatBox label="Average Score" value={averageScore.toLocaleString()} icon="📊" />
-            <StatBox label="Lines Cleared" value={stats.totalLinesCleared} icon="📏" />
-            <StatBox label="Longest Streak" value={stats.longestStreak} icon="🔥" />
-            <StatBox label="Best Combo" value={`${stats.bestCombo}x`} icon="⚡" />
-            <StatBox label="Blocks Placed" value={stats.totalBlocksPlaced} icon="🧱" />
-            <StatBox label="Efficiency" value={`${efficiency}%`} icon="🎯" />
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Statistics */}
+          <div className="p-4 space-y-4">
+            <h3 className="text-lg font-serif font-bold text-[#5c4a3c] flex items-center gap-2">
+              <BarChart3 size={18} />
+              Statistics
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <StatBox label="Games Played" value={stats.gamesPlayed} icon="📜" />
+              <StatBox label="High Score" value={stats.highScore.toLocaleString()} icon="👑" />
+              <StatBox label="Average Score" value={averageScore.toLocaleString()} icon="📊" />
+              <StatBox label="Lines Cleared" value={stats.totalLinesCleared} icon="📏" />
+              <StatBox label="Longest Streak" value={stats.longestStreak} icon="🔥" />
+              <StatBox label="Best Combo" value={`${stats.bestCombo}x`} icon="⚡" />
+              <StatBox label="Blocks Placed" value={stats.totalBlocksPlaced} icon="🧱" />
+              <StatBox label="Efficiency" value={`${efficiency}%`} icon="🎯" />
+            </div>
           </div>
-        </div>
 
-        {/* Achievements */}
-        <div className="p-4 border-t-2 border-[#d4c9af] space-y-4">
-          <h3 className="text-lg font-serif font-bold text-[#5c4a3c] flex items-center gap-2">
-            <Trophy size={18} />
-            Achievements ({unlockedCount}/{achievements.length})
-          </h3>
-          
-          <div className="grid grid-cols-1 gap-2">
-            {achievements.map(achievement => (
-              <AchievementBadge key={achievement.id} achievement={achievement} />
-            ))}
+          {/* Achievements */}
+          <div className="p-4 border-t-2 border-[#d4c9af] space-y-4">
+            <h3 className="text-lg font-serif font-bold text-[#5c4a3c] flex items-center gap-2">
+              <Trophy size={18} />
+              Achievements ({unlockedCount}/{achievements.length})
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {achievements.map(achievement => (
+                <AchievementBadge key={achievement.id} achievement={achievement} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
