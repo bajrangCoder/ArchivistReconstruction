@@ -23,7 +23,8 @@ const animationState = {
   stampingProgress: new Map<string, number>(),
   flashProgress: 0,
   shake: 0,
-  gameOverFade: 0
+  gameOverFade: 0,
+  particleStartTime: 0
 };
 
 const drawBlock = (
@@ -221,14 +222,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Flash effect for clearing lines
       if (state.clearingLines.rows.length > 0 || state.clearingLines.cols.length > 0) {
         animationState.flashProgress = Math.min(1, animationState.flashProgress + 0.06);
-        const flashAlpha = 1 - animationState.flashProgress;
-        if (flashAlpha > 0) {
+        const totalLines = state.clearingLines.rows.length + state.clearingLines.cols.length;
+        
+        if (animationState.flashProgress < 0.03 && totalLines >= 2) {
+          animationState.shake = Math.min(1, animationState.shake + 0.2 * totalLines);
+        }
+        
+        const flashAlpha = Math.pow(1 - animationState.flashProgress, 2);
+        if (flashAlpha > 0.01) {
           ctx.save();
-          ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.8})`;
-          ctx.shadowBlur = 30;
-          ctx.shadowColor = 'white';
-          state.clearingLines.rows.forEach(r => ctx.fillRect(0, r * cellSize, width, cellSize));
-          state.clearingLines.cols.forEach(c => ctx.fillRect(c * cellSize, 0, cellSize, height));
+          ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.6})`;
+          state.clearingLines.rows.forEach(r => {
+            ctx.fillRect(0, r * cellSize, width, cellSize);
+          });
+          state.clearingLines.cols.forEach(c => {
+            ctx.fillRect(c * cellSize, 0, cellSize, height);
+          });
           ctx.restore();
         }
       } else {
@@ -261,7 +270,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.restore();
       }
 
-      // Draw grid blocks
       state.grid.forEach((row, r) => {
         row.forEach((cell, c) => {
           const key = `${r},${c}`;
@@ -270,6 +278,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           if (state.clearingCells.has(key)) {
             const progress = animationState.clearingProgress.get(key) || 0;
             if (progress < 1 && cell) {
+              const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
+              const easedProgress = easeOutQuart(progress);
+              
+              const scale = 1 + easedProgress * 0.25;
+              const opacity = 1 - easedProgress;
+              const rotation = easedProgress * 0.1;
+              
+              ctx.save();
+              const cx = c * cellSize + cellSize / 2;
+              const cy = r * cellSize + cellSize / 2;
+              ctx.translate(cx, cy);
+              ctx.rotate(rotation);
+              ctx.translate(-cx, -cy);
+              
               drawBlock(
                 ctx,
                 c * cellSize,
@@ -277,12 +299,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 cellSize,
                 cell.color,
                 cell.symbol,
-                1 - progress,
-                1 + progress * 1.5,
+                opacity,
+                scale,
                 true,
-                seed + Date.now() / 100
+                seed
               );
-              animationState.clearingProgress.set(key, progress + 0.035);
+              
+              ctx.restore();
+              animationState.clearingProgress.set(key, progress + 0.045);
             }
           } else if (cell) {
             let scale = 1;
@@ -377,30 +401,76 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         });
       }
 
-      // Update and draw particles (batched updates)
       const now = performance.now();
-      const shouldBatch = now - lastBatchTime > 50; // Batch every 50ms
+      const shouldBatch = now - lastBatchTime > 50;
+      if (!animationState.particleStartTime) {
+        animationState.particleStartTime = now;
+      }
 
       setParticles(prev => {
         const next: Particle[] = [];
+        const deltaTime = 1;
+        
         prev.forEach(p => {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.2;
-          p.life -= 0.035;
+          if (p.delay && p.delay > 0) {
+            p.delay -= 16;
+            next.push(p);
+            return;
+          }
+
+          const friction = p.friction ?? 0.96;
+          const gravity = p.gravity ?? 0.15;
+          
+          p.x += p.vx * deltaTime;
+          p.y += p.vy * deltaTime;
+          p.vx *= friction;
+          p.vy *= friction;
+          p.vy += gravity;
+          
+          if (p.rotation !== undefined && p.rotationSpeed !== undefined) {
+            p.rotation += p.rotationSpeed;
+          }
+          
+          const lifeDecay = p.type === 'sparkle' ? 0.035 : p.type === 'burst' ? 0.04 : 0.03;
+          p.life -= lifeDecay;
+
           if (p.life > 0) {
             ctx.save();
-            ctx.globalAlpha = p.life;
+            
+            const alpha = Math.min(1, p.life * 1.2);
+            ctx.globalAlpha = alpha;
             ctx.fillStyle = p.color;
-            ctx.beginPath();
-            const r = p.size * p.life;
-            ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-            ctx.fill();
+            
+            if (p.type === 'sparkle') {
+              const size = p.size * (0.5 + p.life * 0.5);
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (p.type === 'burst') {
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.rotation || 0);
+              const size = p.size * p.life;
+              ctx.fillRect(-size, -size * 0.3, size * 2, size * 0.6);
+            } else {
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.rotation || 0);
+              const size = p.size * (0.5 + p.life * 0.5);
+              ctx.beginPath();
+              ctx.moveTo(-size / 2, -size / 2);
+              ctx.lineTo(size / 2, -size / 2);
+              ctx.lineTo(size / 2, size / 2);
+              ctx.lineTo(-size / 2, size / 2);
+              ctx.closePath();
+              ctx.fill();
+            }
+            
             ctx.restore();
             next.push(p);
           }
         });
+        
         if (shouldBatch) {
+          lastBatchTime = now;
           return next;
         }
         return prev.length !== next.length ? next : prev;

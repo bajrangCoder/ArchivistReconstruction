@@ -140,24 +140,81 @@ function App() {
     ]);
   }, []);
 
-  const createLineParticles = useCallback((type: 'row' | 'col', index: number, color: string) => {
+  const createLineParticles = useCallback((type: 'row' | 'col', index: number, cellColors: string[]) => {
     const cellSize = 600 / GRID_SIZE;
     const newParticles: Particle[] = [];
+    
     for (let i = 0; i < GRID_SIZE; i++) {
       const centerX = type === 'row' ? i * cellSize + cellSize / 2 : index * cellSize + cellSize / 2;
       const centerY = type === 'row' ? index * cellSize + cellSize / 2 : i * cellSize + cellSize / 2;
-      for (let j = 0; j < 8; j++) {
+      const cellColor = cellColors[i] || '#2d3748';
+      const delay = i * 12;
+      
+      for (let j = 0; j < 3; j++) {
+        const angle = (Math.random() - 0.5) * Math.PI;
+        const speed = Math.random() * 5 + 3;
+        newParticles.push({
+          x: centerX + (Math.random() - 0.5) * 8,
+          y: centerY + (Math.random() - 0.5) * 8,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.5,
+          life: 1,
+          startLife: 1,
+          color: cellColor,
+          size: Math.random() * 7 + 4,
+          type: 'ink',
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.15,
+          gravity: 0.1,
+          friction: 0.96,
+          delay
+        });
+      }
+      
+      for (let j = 0; j < 2; j++) {
+        const sparkAngle = Math.random() * Math.PI * 2;
+        const sparkSpeed = Math.random() * 6 + 3;
         newParticles.push({
           x: centerX,
           y: centerY,
-          vx: (Math.random() - 0.5) * 10,
-          vy: (Math.random() - 0.5) * 10,
-          life: 1.5,
-          color,
-          size: Math.random() * 8 + 4
+          vx: Math.cos(sparkAngle) * sparkSpeed,
+          vy: Math.sin(sparkAngle) * sparkSpeed,
+          life: 0.6,
+          startLife: 0.6,
+          color: '#fffaed',
+          size: Math.random() * 2 + 1.5,
+          type: 'sparkle',
+          gravity: -0.02,
+          friction: 0.95,
+          delay
         });
       }
     }
+    
+    const lineCenterX = type === 'row' ? 300 : index * cellSize + cellSize / 2;
+    const lineCenterY = type === 'row' ? index * cellSize + cellSize / 2 : 300;
+    
+    for (let j = 0; j < 6; j++) {
+      const burstAngle = (j / 6) * Math.PI * 2;
+      const speed = Math.random() * 6 + 4;
+      newParticles.push({
+        x: lineCenterX,
+        y: lineCenterY,
+        vx: Math.cos(burstAngle) * speed,
+        vy: Math.sin(burstAngle) * speed,
+        life: 0.7,
+        startLife: 0.7,
+        color: cellColors[Math.floor(Math.random() * cellColors.length)] || '#2d3748',
+        size: Math.random() * 5 + 3,
+        type: 'burst',
+        rotation: burstAngle,
+        rotationSpeed: 0.1,
+        gravity: 0.06,
+        friction: 0.94,
+        delay: 0
+      });
+    }
+    
     setParticles(prev => [...prev, ...newParticles]);
   }, []);
 
@@ -219,16 +276,22 @@ function App() {
 
         const newClearing = new Set<string>();
         rowsToClear.forEach(r => {
+          const rowColors: string[] = [];
           for (let c = 0; c < GRID_SIZE; c++) {
             newClearing.add(`${r},${c}`);
+            const cell = currentGrid[r][c];
+            rowColors.push(cell?.color || '#2d3748');
           }
-          createLineParticles('row', r, '#2d3748');
+          createLineParticles('row', r, rowColors);
         });
         colsToClear.forEach(c => {
+          const colColors: string[] = [];
           for (let r = 0; r < GRID_SIZE; r++) {
             newClearing.add(`${r},${c}`);
+            const cell = currentGrid[r][c];
+            colColors.push(cell?.color || '#2d3748');
           }
-          createLineParticles('col', c, '#2d3748');
+          createLineParticles('col', c, colColors);
         });
 
         setClearingCells(newClearing);

@@ -12,6 +12,8 @@ export interface Shape {
   symbol: string;
 }
 
+export type ParticleType = 'ink' | 'sparkle' | 'ember' | 'swirl' | 'trail' | 'burst';
+
 export interface Particle {
   x: number;
   y: number;
@@ -20,6 +22,14 @@ export interface Particle {
   life: number;
   color: string;
   size: number;
+  type: ParticleType;
+  rotation?: number;
+  rotationSpeed?: number;
+  trail?: { x: number; y: number }[];
+  gravity?: number;
+  friction?: number;
+  startLife?: number;
+  delay?: number;
 }
 
 export type GameStatus = 'START' | 'PLAYING' | 'PAUSED' | 'GAMEOVER';
