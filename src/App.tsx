@@ -890,6 +890,11 @@ function App() {
       {/* Share Modal */}
       <ShareModal
         score={score}
+        highScore={highScore}
+        linesCleared={linesClearedThisGame}
+        blocksPlaced={blocksPlacedThisGame}
+        bestCombo={combo}
+        streak={streak}
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         onFeedback={showFeedback}
