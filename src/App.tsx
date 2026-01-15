@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Book, Play, Award, Info, Pause, Bookmark, BarChart3, Volume2, VolumeX, HelpCircle, RotateCcw, Palette, Share2, Home } from 'lucide-react';
+import { Book, Play, Award, Info, Pause, Bookmark, BarChart3, Volume2, VolumeX, HelpCircle, RotateCcw, Palette, Share2, Home, PlayCircle } from 'lucide-react';
 import GameCanvas from './components/GameCanvas';
 import AnimatedBackground from './components/AnimatedBackground';
 import StatsPage from './components/StatsPage';
@@ -16,6 +16,7 @@ import {
   loadStats, saveStats, loadAchievements, checkAchievements, 
   type GameStats, type Achievement 
 } from './data/gameStats';
+import { saveGameState, loadGameState, clearSavedGame, hasSavedGame } from './utils/saveGame';
 import type { Shape, GridCell, Particle, GameStatus, FeedbackText } from './types';
 
 function App() {
@@ -53,14 +54,34 @@ function App() {
   const [linesClearedThisGame, setLinesClearedThisGame] = useState(0);
   const [screenTransition, setScreenTransition] = useState<'in' | 'out' | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [savedGameExists, setSavedGameExists] = useState(() => hasSavedGame());
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardRect, setBoardRect] = useState<DOMRect | null>(null);
   const lastClearTimeRef = useRef<number>(0);
 
+  useEffect(() => {
+    if (gameStatus === 'PLAYING' || gameStatus === 'PAUSED') {
+      saveGameState({
+        grid,
+        score,
+        tray,
+        combo,
+        streak,
+        blocksPlacedThisGame,
+        linesClearedThisGame,
+        wisdom,
+        currentTheme,
+        gameStatus
+      });
+    }
+  }, [grid, score, tray, combo, streak, blocksPlacedThisGame, linesClearedThisGame, wisdom, currentTheme, gameStatus]);
+
   const triggerGameOver = useCallback(() => {
     soundManager.playGameOver();
     setGameStatus('GAMEOVER');
+    clearSavedGame();
+    setSavedGameExists(false);
     
     // Update stats on game over
     setGameStats(prev => {
@@ -434,10 +455,38 @@ function App() {
       setClearingCells(new Set());
       setStampingCells(new Set());
       setWisdom(getRandomWisdom());
+      clearSavedGame();
+      setSavedGameExists(false);
       setScreenTransition('in');
       setTimeout(() => setScreenTransition(null), 500);
     }, 300);
   }, [currentTheme]);
+
+  const handleContinue = useCallback(() => {
+    const savedGame = loadGameState();
+    if (!savedGame) return;
+    
+    setScreenTransition('out');
+    setTimeout(() => {
+      soundManager.init();
+      soundManager.playStart();
+      setGrid(savedGame.grid);
+      setTray(savedGame.tray);
+      setScore(savedGame.score);
+      setCombo(savedGame.combo);
+      setStreak(savedGame.streak);
+      setBlocksPlacedThisGame(savedGame.blocksPlacedThisGame);
+      setLinesClearedThisGame(savedGame.linesClearedThisGame);
+      setWisdom(savedGame.wisdom);
+      setCurrentTheme(savedGame.currentTheme);
+      setGameStatus('PLAYING');
+      setShowGameOverModal(false);
+      setClearingCells(new Set());
+      setStampingCells(new Set());
+      setScreenTransition('in');
+      setTimeout(() => setScreenTransition(null), 500);
+    }, 300);
+  }, []);
 
   const handleRestart = useCallback(() => {
     if (gameStatus !== 'PLAYING') return;
@@ -699,12 +748,23 @@ function App() {
 
             {/* Buttons */}
             <div className="space-y-2 sm:space-y-3">
+              {savedGameExists && (
+                <button
+                  onClick={handleContinue}
+                  className="w-full py-3 sm:py-4 bg-[#7b341e] text-[#f4ecd8] font-serif text-lg sm:text-xl font-bold hover:bg-[#8b442e] transition-all flex items-center justify-center space-x-2 shadow-lg border-2 border-[#5a2515]"
+                >
+                  <PlayCircle size={18} className="sm:w-5 sm:h-5" />
+                  <span>Continue Scroll</span>
+                </button>
+              )}
               <button
                 onClick={handleStart}
-                className="w-full py-3 sm:py-4 bg-[#2d241e] text-[#f4ecd8] font-serif text-lg sm:text-xl font-bold hover:bg-[#3d3129] transition-all flex items-center justify-center space-x-2 shadow-lg"
+                className={`w-full py-3 sm:py-4 bg-[#2d241e] text-[#f4ecd8] font-serif font-bold hover:bg-[#3d3129] transition-all flex items-center justify-center space-x-2 shadow-lg ${
+                  savedGameExists ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'
+                }`}
               >
                 <Play size={18} fill="currentColor" className="sm:w-5 sm:h-5" />
-                <span>Begin Reconstruction</span>
+                <span>{savedGameExists ? 'New Reconstruction' : 'Begin Reconstruction'}</span>
               </button>
               
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2">

@@ -1,0 +1,27 @@
+{
+  "name": "The Archivist's Reconstruction",
+  "short_name": "ArchivistRecon",
+  "description": "A puzzle game where you organize scattered ink stamps on an ancient parchment grid",
+  "theme_color": "#2d241e",
+  "background_color": "#f4ecd8",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en"
+}
