@@ -87,6 +87,84 @@ export const colorThemes: ColorTheme[] = [
       '#322659', // Dark Purple
     ],
     symbols: ['✦', '✧', '★', '☆', '◐', '◑', '●', '○', '◆', '◇', '■', '□']
+  },
+  {
+    id: 'sakura',
+    name: 'Sakura Bloom',
+    colors: [
+      '#97266d', // Deep Pink
+      '#b83280', // Magenta
+      '#d53f8c', // Rose
+      '#ed64a6', // Pink
+      '#702459', // Plum
+      '#553c9a', // Purple
+    ],
+    symbols: ['❀', '✿', '❁', '✾', '❃', '✽', '❋', '✳', '❈', '✹', '❉', '✵']
+  },
+  {
+    id: 'ember',
+    name: 'Burning Ember',
+    colors: [
+      '#c53030', // Red
+      '#9c4221', // Burnt Orange
+      '#dd6b20', // Orange
+      '#d69e2e', // Gold
+      '#744210', // Brown
+      '#7b341e', // Rust
+    ],
+    symbols: ['🔥', '✦', '★', '◆', '❖', '✧', '✹', '✵', '❋', '✳', '❈', '✽']
+  },
+  {
+    id: 'arctic',
+    name: 'Arctic Frost',
+    colors: [
+      '#2b6cb0', // Blue
+      '#3182ce', // Sky Blue
+      '#4299e1', // Light Blue
+      '#63b3ed', // Pale Blue
+      '#2c5282', // Deep Blue
+      '#285e61', // Teal
+    ],
+    symbols: ['❄', '❆', '❅', '✧', '◇', '○', '◈', '⬡', '△', '☆', '✦', '◆']
+  },
+  {
+    id: 'sunset',
+    name: 'Golden Sunset',
+    colors: [
+      '#ed8936', // Orange
+      '#dd6b20', // Dark Orange
+      '#d69e2e', // Gold
+      '#ecc94b', // Yellow
+      '#c05621', // Burnt Orange
+      '#9c4221', // Rust
+    ],
+    symbols: ['☀', '✦', '★', '◆', '❖', '✧', '✹', '✵', '◈', '⬡', '❋', '✳']
+  },
+  {
+    id: 'vintage',
+    name: 'Vintage Press',
+    colors: [
+      '#5d4e37', // Olive Brown
+      '#6b705c', // Olive Gray
+      '#8b7355', // Tan
+      '#a98467', // Dusty Rose
+      '#7c6f64', // Warm Gray
+      '#6d4c41', // Coffee
+    ],
+    symbols: ['❧', '☙', '✤', '✥', '✦', '✧', '◆', '◇', '●', '○', '■', '□']
+  },
+  {
+    id: 'neon',
+    name: 'Neon Nights',
+    colors: [
+      '#805ad5', // Purple
+      '#d53f8c', // Pink
+      '#38b2ac', // Teal
+      '#4fd1c5', // Cyan
+      '#ed64a6', // Hot Pink
+      '#667eea', // Indigo
+    ],
+    symbols: ['◆', '◇', '★', '☆', '●', '○', '■', '□', '▲', '△', '✦', '✧']
   }
 ];
 
