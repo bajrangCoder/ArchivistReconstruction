@@ -67,6 +67,20 @@ export const achievementDefinitions: Omit<Achievement, 'unlocked' | 'unlockedAt'
     requirement: (stats) => stats.highScore >= 5000
   },
   {
+    id: 'high_scorer',
+    name: 'High Scorer',
+    description: 'Score 7,500 points in a single game',
+    icon: '🌟',
+    requirement: (stats) => stats.highScore >= 7500
+  },
+  {
+    id: 'grand_archivist',
+    name: 'Grand Archivist',
+    description: 'Score 10,000 points in a single game',
+    icon: '👑',
+    requirement: (stats) => stats.highScore >= 10000
+  },
+  {
     id: 'line_purger',
     name: 'Line Purger',
     description: 'Clear 50 total lines',
@@ -81,6 +95,13 @@ export const achievementDefinitions: Omit<Achievement, 'unlocked' | 'unlockedAt'
     requirement: (stats) => stats.totalLinesCleared >= 200
   },
   {
+    id: 'page_perfectionist',
+    name: 'Page Perfectionist',
+    description: 'Clear 500 total lines',
+    icon: '📚',
+    requirement: (stats) => stats.totalLinesCleared >= 500
+  },
+  {
     id: 'combo_initiate',
     name: 'Combo Initiate',
     description: 'Get a 2x combo',
@@ -90,9 +111,16 @@ export const achievementDefinitions: Omit<Achievement, 'unlocked' | 'unlockedAt'
   {
     id: 'combo_master',
     name: 'Combo Master',
-    description: 'Get a 5x combo',
+    description: 'Get a 4x combo',
     icon: '🔥',
-    requirement: (stats) => stats.bestCombo >= 5
+    requirement: (stats) => stats.bestCombo >= 4
+  },
+  {
+    id: 'combo_legend',
+    name: 'Combo Legend',
+    description: 'Get a 6x combo (clear 6+ lines at once)',
+    icon: '💎',
+    requirement: (stats) => stats.bestCombo >= 6
   },
   {
     id: 'streak_keeper',
@@ -102,11 +130,32 @@ export const achievementDefinitions: Omit<Achievement, 'unlocked' | 'unlockedAt'
     requirement: (stats) => stats.longestStreak >= 3
   },
   {
+    id: 'streak_master',
+    name: 'Streak Master',
+    description: 'Maintain a 5x streak',
+    icon: '🌙',
+    requirement: (stats) => stats.longestStreak >= 5
+  },
+  {
+    id: 'unstoppable',
+    name: 'Unstoppable',
+    description: 'Maintain a 10x streak',
+    icon: '☄️',
+    requirement: (stats) => stats.longestStreak >= 10
+  },
+  {
     id: 'dedicated_archivist',
     name: 'Dedicated Archivist',
     description: 'Play 10 games',
-    icon: '📚',
+    icon: '📖',
     requirement: (stats) => stats.gamesPlayed >= 10
+  },
+  {
+    id: 'veteran_scribe',
+    name: 'Veteran Scribe',
+    description: 'Play 50 games',
+    icon: '🎓',
+    requirement: (stats) => stats.gamesPlayed >= 50
   },
   {
     id: 'block_placer',
@@ -119,8 +168,29 @@ export const achievementDefinitions: Omit<Achievement, 'unlocked' | 'unlockedAt'
     id: 'prolific_scribe',
     name: 'Prolific Scribe',
     description: 'Place 500 blocks',
-    icon: '📖',
+    icon: '📝',
     requirement: (stats) => stats.totalBlocksPlaced >= 500
+  },
+  {
+    id: 'ink_hoarder',
+    name: 'Ink Hoarder',
+    description: 'Place 1,000 blocks',
+    icon: '🏛️',
+    requirement: (stats) => stats.totalBlocksPlaced >= 1000
+  },
+  {
+    id: 'score_collector',
+    name: 'Score Collector',
+    description: 'Accumulate 10,000 total points',
+    icon: '💰',
+    requirement: (stats) => stats.totalScore >= 10000
+  },
+  {
+    id: 'wealthy_archivist',
+    name: 'Wealthy Archivist',
+    description: 'Accumulate 50,000 total points',
+    icon: '💎',
+    requirement: (stats) => stats.totalScore >= 50000
   }
 ];
 
