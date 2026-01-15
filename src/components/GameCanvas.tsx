@@ -125,6 +125,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   setParticles,
   clearingCells,
   potentialLines,
+  feedbackTexts,
   setFeedbackTexts,
   stampingCells,
   clearingLines,
@@ -152,7 +153,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     potentialLines,
     stampingCells,
     clearingLines,
-    gameStatus
+    gameStatus,
+    feedbackTexts
   });
 
   // Update refs in effect (not during render)
@@ -165,7 +167,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       potentialLines,
       stampingCells,
       clearingLines,
-      gameStatus
+      gameStatus,
+      feedbackTexts
     };
   });
 
@@ -403,49 +406,95 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         return prev.length !== next.length ? next : prev;
       });
 
-      // Update and draw feedback texts - Clean and readable
-      setFeedbackTexts(prev => {
-        const next: FeedbackText[] = [];
-        prev.forEach(f => {
-          f.y -= 0.6; // Slow rise
-          f.life -= 0.01; // Slow fade
-          if (f.life > 0) {
-            ctx.save();
-            
-            const alpha = Math.min(1, f.life * 1.2);
-            
-            ctx.translate(f.x, f.y);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = `italic bold 38px Georgia, serif`;
-            
-            // Outer glow for visibility
-            ctx.globalAlpha = alpha * 0.4;
-            ctx.fillStyle = '#f4ecd8';
-            for (let i = 0; i < 3; i++) {
-              ctx.fillText(f.text, 0, 0);
-            }
-            
-            // Text shadow
-            ctx.globalAlpha = alpha * 0.5;
-            ctx.fillStyle = '#2d241e';
-            ctx.fillText(f.text, 2, 2);
-            
-            // Main text - sepia ink color
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#5c3d2e';
-            ctx.fillText(f.text, 0, 0);
-            
-            ctx.restore();
-            next.push(f);
-          }
-        });
-        if (shouldBatch) {
-          lastBatchTime = now;
-          return next;
+      // Draw feedback texts - Smooth animation with easing (no state updates during draw)
+      const feedbackNow = performance.now();
+      const currentFeedbackTexts = state.feedbackTexts;
+      let hasExpiredTexts = false;
+      
+      // Easing functions defined once
+      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+      const easeOutBack = (t: number) => {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+      };
+      const easeInOutQuad = (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      
+      currentFeedbackTexts.forEach(f => {
+        const elapsed = feedbackNow - f.startTime;
+        const progress = Math.min(1, elapsed / f.duration);
+        
+        if (progress >= 1) {
+          hasExpiredTexts = true;
+          return;
         }
-        return prev.length !== next.length ? next : prev;
+        
+        ctx.save();
+        
+        // Phase-based animation (entrance: 0-0.2, hold: 0.2-0.65, exit: 0.65-1.0)
+        let alpha = 1;
+        let scale = 1;
+        let yOffset = 0;
+        
+        if (progress < 0.2) {
+          // Entrance phase - smooth pop-in with overshoot
+          const entranceProgress = progress / 0.2;
+          alpha = easeOutCubic(entranceProgress);
+          scale = easeOutBack(entranceProgress);
+        } else if (progress < 0.65) {
+          // Hold phase - fully visible with gentle floating
+          alpha = 1;
+          scale = 1;
+          const floatProgress = (progress - 0.2) / 0.45;
+          yOffset = Math.sin(floatProgress * Math.PI) * 4;
+        } else {
+          // Exit phase - smooth fade out and rise
+          const exitProgress = (progress - 0.65) / 0.35;
+          const easedExit = easeInOutQuad(exitProgress);
+          alpha = 1 - easedExit;
+          scale = 1 - easedExit * 0.15;
+          yOffset = -easedExit * 50;
+        }
+        
+        // Smooth continuous rise throughout
+        const baseRise = easeOutCubic(progress) * 80;
+        const finalY = f.y - baseRise + yOffset;
+        
+        ctx.translate(f.x, finalY);
+        ctx.scale(scale, scale);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `italic bold 40px Georgia, serif`;
+        
+        // Soft outer glow (single pass)
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.shadowColor = '#f4ecd8';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#f4ecd8';
+        ctx.fillText(f.text, 0, 0);
+        ctx.shadowBlur = 0;
+        
+        // Text shadow for depth
+        ctx.globalAlpha = alpha * 0.5;
+        ctx.fillStyle = '#1a1510';
+        ctx.fillText(f.text, 1.5, 1.5);
+        
+        // Main text
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#5c3d2e';
+        ctx.fillText(f.text, 0, 0);
+        
+        ctx.restore();
       });
+      
+      // Only update state to remove expired texts (not every frame)
+      if (hasExpiredTexts && shouldBatch) {
+        lastBatchTime = feedbackNow;
+        setFeedbackTexts(prev => prev.filter(f => {
+          const elapsed = feedbackNow - f.startTime;
+          return elapsed < f.duration;
+        }));
+      }
 
       // Game over overlay - use simple semi-transparent fill instead of gradient
       if (animationState.gameOverFade > 0) {

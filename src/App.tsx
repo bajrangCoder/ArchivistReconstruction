@@ -112,7 +112,9 @@ function App() {
         text,
         x: 300,
         y: 320,
-        life: 2.5
+        life: 2.5,
+        startTime: performance.now(),
+        duration: 2500
       }
     ]);
   }, []);

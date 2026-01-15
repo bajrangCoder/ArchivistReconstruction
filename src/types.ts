@@ -30,4 +30,6 @@ export interface FeedbackText {
   x: number;
   y: number;
   life: number;
+  startTime: number;
+  duration: number;
 }
